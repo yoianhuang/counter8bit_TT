@@ -1,40 +1,57 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
-# SPDX-License-Identifier: Apache-2.0
-
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
-
+from cocotb.triggers import RisingEdge, Timer
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_counter8bit(dut):
+    """Test asynchronous reset, synchronous load, continuous counting, and tri-state control."""
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
+    # 1. Start a 10ns clock (100 MHz)
+    clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Reset
-    dut._log.info("Reset")
-    dut.ena.value = 1
-    dut.ui_in.value = 0
-    dut.uio_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    dut.rst_n.value = 1
+    # Initialize inputs
+    dut.rst.value = 0
+    dut.en.value = 0
+    dut.ld.value = 0
+    dut.load.value = 0
+    await Timer(2, unit="ns")
 
-    dut._log.info("Test project behavior")
+    # 2. Test Asynchronous Reset
+    dut.rst.value = 1
+    await Timer(5, unit="ns")
+    dut.rst.value = 0
+    await Timer(1, unit="ns")
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    # 3. Verify High-Z output when disabled
+    assert str(dut.out.value).lower() == "zzzzzzzz", f"Expected 'zzzzzzzz', got {dut.out.value}"
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    # 4. Enable Output and Check Value BEFORE Next Clock Edge (Should be 0)
+    dut.en.value = 1
+    await Timer(1, unit="ns")
+    assert dut.out.value == 0, f"Expected 0 after reset, got {dut.out.value}"
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+    # 5. Let it count once
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+    assert dut.out.value == 1, f"Expected 1, got {dut.out.value}"
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+    # 6. Test Synchronous Load
+    dut.load.value = 0x42
+    dut.ld.value = 1
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+    dut.ld.value = 0
+    assert dut.out.value == 0x42, f"Expected 0x42, got {hex(dut.out.value.integer)}"
+
+    # 7. Test Continuous Counting while Output Disabled (en = 0)
+    dut.en.value = 0
+    await RisingEdge(dut.clk)  # Counter becomes 0x43
+    await RisingEdge(dut.clk)  # Counter becomes 0x44
+    await Timer(1, unit="ns")
+    assert str(dut.out.value).lower() == "zzzzzzzz", "Output should stay high-Z while en=0"
+
+    # 8. Re-enable Output and Verify Internal Counter Advanced
+    dut.en.value = 1
+    await Timer(1, unit="ns")
+    assert dut.out.value == 0x44, f"Expected 0x44, got {hex(dut.out.value.integer)}"
