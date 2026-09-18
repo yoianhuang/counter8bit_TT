@@ -18,11 +18,11 @@ else
 
 # Gate level simulation:
 SIM_BUILD				= sim_build/gl
-COMPILE_ARGS    += -DGL_TEST
-COMPILE_ARGS    += -DFUNCTIONAL
-COMPILE_ARGS    += -DUSE_POWER_PINS
-COMPILE_ARGS    += -DSIM
-COMPILE_ARGS    += -DUNIT_DELAY=\#1
+COMPILE_ARGS         += -DGL_TEST
+COMPILE_ARGS         += -DFUNCTIONAL
+COMPILE_ARGS         += -DUSE_POWER_PINS
+COMPILE_ARGS         += -DSIM
+COMPILE_ARGS         += -DUNIT_DELAY=\#1
 VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilog/primitives.v
 VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilog/gf180mcu_fd_sc_mcu7t5v0.v
 
@@ -34,11 +34,10 @@ endif
 # Allow sharing configuration between design and testbench via `include`:
 COMPILE_ARGS 		+= -I$(SRC_DIR)
 
-# Include the testbench sources:
-VERILOG_SOURCES += $(PWD)/tb.v
-TOPLEVEL = tb
+# Set TOPLEVEL to the exact module name inside src/project.v (e.g. counter8bit or tt_um_...)
+TOPLEVEL = counter8bit
 
-# List test modules to run, separated by commas and without the .py suffix:
+# List test modules to run (without .py suffix):
 COCOTB_TEST_MODULES = test
 
 # include cocotb's make rules to take care of the simulator setup
