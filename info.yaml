@@ -1,37 +1,39 @@
+yaml_version: 6
+
 project:
-  top_module:  "tt_um_example" # Keep as tt_um_example or match your repo's module name
-
-documentation: 
-  author:       "Your Name"
   title:        "8-bit Programmable Counter"
-  language:     "Verilog"
+  author:       "Your Name"
+  top_module:   "tt_um_example"
   description:  "8-bit counter with async reset, sync load, and tri-state outputs"
+  language:     "Verilog"
+  clock_hz:     10000000
+  tiles:        "1x1"
 
-  # Map your counter signals to Tiny Tapeout IO pins
-  inputs:
-    - en        # ui_in[0]
-    - ld        # ui_in[1]
-    - none
-    - none
-    - none
-    - none
-    - none
-    - none
-  outputs:
-    - out[0]
-    - out[1]
-    - out[2]
-    - out[3]
-    - out[4]
-    - out[5]
-    - out[6]
-    - out[7]
-  bidirectional:
-    - load[0]   # uio_in[0]
-    - load[1]   # uio_in[1]
-    - load[2]   # uio_in[2]
-    - load[3]   # uio_in[3]
-    - load[4]   # uio_in[4]
-    - load[5]   # uio_in[5]
-    - load[6]   # uio_in[6]
-    - load[7]   # uio_in[7]
+pinout:
+  ui:
+    - "en"
+    - "ld"
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+  uo:
+    - "out[0]"
+    - "out[1]"
+    - "out[2]"
+    - "out[3]"
+    - "out[4]"
+    - "out[5]"
+    - "out[6]"
+    - "out[7]"
+  uio:
+    - "load[0]"
+    - "load[1]"
+    - "load[2]"
+    - "load[3]"
+    - "load[4]"
+    - "load[5]"
+    - "load[6]"
+    - "load[7]"
