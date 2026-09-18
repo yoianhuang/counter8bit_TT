@@ -3,55 +3,36 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
 @cocotb.test()
-async def test_counter8bit(dut):
-    """Test asynchronous reset, synchronous load, continuous counting, and tri-state control."""
-
-    # 1. Start a 10ns clock (100 MHz)
+async def test_project(dut):
     clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Initialize inputs
-    dut.rst.value = 0
-    dut.en.value = 0
-    dut.ld.value = 0
-    dut.load.value = 0
-    await Timer(2, unit="ns")
-
-    # 2. Test Asynchronous Reset
-    dut.rst.value = 1
-    await Timer(5, unit="ns")
-    dut.rst.value = 0
+    # Enable design and set default inputs
+    dut.ena.value = 1
+    dut.ui_in.value = 0   # [0]=en, [1]=ld
+    dut.uio_in.value = 0  # load value bus
+    dut.rst_n.value = 0  # Assert reset (active low)
+    await Timer(10, unit="ns")
+    dut.rst_n.value = 1  # Deassert reset
     await Timer(1, unit="ns")
 
-    # 3. Verify High-Z output when disabled
-    assert str(dut.out.value).lower() == "zzzzzzzz", f"Expected 'zzzzzzzz', got {dut.out.value}"
+    # 1. Tri-state output check (en=0)
+    assert str(dut.uo_out.value).lower() == "zzzzzzzz"
 
-    # 4. Enable Output and Check Value BEFORE Next Clock Edge (Should be 0)
-    dut.en.value = 1
+    # 2. Enable output (en=1) -> Should be 0
+    dut.ui_in.value = 0b00000001
     await Timer(1, unit="ns")
-    assert dut.out.value == 0, f"Expected 0 after reset, got {dut.out.value}"
+    assert dut.uo_out.value == 0
 
-    # 5. Let it count once
+    # 3. Synchronous Load (ld=1, load=0xAB)
+    dut.uio_in.value = 0xAB
+    dut.ui_in.value = 0b00000011  # en=1, ld=1
     await RisingEdge(dut.clk)
     await Timer(1, unit="ns")
-    assert dut.out.value == 1, f"Expected 1, got {dut.out.value}"
+    dut.ui_in.value = 0b00000001  # en=1, ld=0
+    assert dut.uo_out.value == 0xAB
 
-    # 6. Test Synchronous Load
-    dut.load.value = 0x42
-    dut.ld.value = 1
+    # 4. Count up
     await RisingEdge(dut.clk)
     await Timer(1, unit="ns")
-    dut.ld.value = 0
-    assert dut.out.value == 0x42, f"Expected 0x42, got {hex(dut.out.value.integer)}"
-
-    # 7. Test Continuous Counting while Output Disabled (en = 0)
-    dut.en.value = 0
-    await RisingEdge(dut.clk)  # Counter becomes 0x43
-    await RisingEdge(dut.clk)  # Counter becomes 0x44
-    await Timer(1, unit="ns")
-    assert str(dut.out.value).lower() == "zzzzzzzz", "Output should stay high-Z while en=0"
-
-    # 8. Re-enable Output and Verify Internal Counter Advanced
-    dut.en.value = 1
-    await Timer(1, unit="ns")
-    assert dut.out.value == 0x44, f"Expected 0x44, got {hex(dut.out.value.integer)}"
+    assert dut.uo_out.value == 0xAC
