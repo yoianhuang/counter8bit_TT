@@ -34,8 +34,8 @@ endif
 # Allow sharing configuration between design and testbench via `include`:
 COMPILE_ARGS 		+= -I$(SRC_DIR)
 
-# Set TOPLEVEL to the exact module name inside src/project.v (e.g. counter8bit or tt_um_...)
-TOPLEVEL = counter8bit
+# Set TOPLEVEL to the exact wrapper module name inside src/project.v:
+TOPLEVEL = tt_um_example
 
 # List test modules to run (without .py suffix):
 COCOTB_TEST_MODULES = test
