@@ -1,27 +1,38 @@
-/*
- * Copyright (c) 2024 Your Name
- * SPDX-License-Identifier: Apache-2.0
- */
-
-`default_nettype none
-
-module tt_um_example (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
-    output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
-    input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+module counter8bit (
+    input wire en, // wire means it is driven externally and reg is for if the thing is dynamically chaning in the always block
+    input wire clk,
+    input wire ld,
+    input wire rst,          // example input driving transitions
+    input wire [7:0] load,
+    output wire [7:0] out      // example output
 );
 
-  // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
-  assign uio_out = 0;
-  assign uio_oe  = 0;
+    // State encoding
+    // localparam acts like a #DEFINE in Cpp
 
-  // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+    reg [7:0] count;
+
+    // 1) State register (sequential) - only place state actually updates
+    always @(posedge clk or posedge rst) begin
+
+        if (rst)
+            count <= 8'h00;
+
+        else
+            if (ld)
+                count <= load;
+            else
+                count <= count + 1'b1; //overflow auto mods it
+    end
+
+    // // 2) Next-state logic (combinational) - decides where to go
+    // always @(*) begin
+    //         next_state = ld ? LD : CT;
+    //         default: next_state = CT;
+    // end
+
+    // 3) Output logic (combinational) - Moore style: output depends only on state
+
+    assign out = en ? count : 8'bZZZZZZZZ;
 
 endmodule
